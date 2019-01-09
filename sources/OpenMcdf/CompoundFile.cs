@@ -1453,7 +1453,7 @@ namespace OpenMcdf
                 fatStream.Seek(nextSecID * 4, SeekOrigin.Begin);
                 int next = fatStream.ReadInt32();
 
-                if (next != nextSecID)
+                if (!result.Exists(sector => sector.Id == next))
                     nextSecID = next;
                 else
                     throw new CFCorruptedFileException("Cyclic sector chain found. File is corrupted");
