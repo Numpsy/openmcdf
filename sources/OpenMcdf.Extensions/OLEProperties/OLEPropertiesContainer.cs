@@ -283,9 +283,12 @@ namespace OpenMcdf.Extensions.OLEProperties
                 }
             };
 
+            PropertyFactory factory = 
+                this.ContainerType == ContainerType.SummaryInfo ? SummaryInfoPropertyFactory.Instance : DocumentSummaryInfoPropertyFactory.Instance;
+
             foreach (var op in this.Properties)
             {
-                ITypedPropertyValue p = PropertyFactory.Instance.NewProperty(op.VTType, this.Context.CodePage);
+                ITypedPropertyValue p = factory.NewProperty(op.VTType, this.Context.CodePage, op.PropertyIdentifier);
                 p.Value = op.Value;
                 ps.PropertySet0.Properties.Add(p);
                 ps.PropertySet0.PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset() { PropertyIdentifier = op.PropertyIdentifier, Offset = 0 });
@@ -320,7 +323,7 @@ namespace OpenMcdf.Extensions.OLEProperties
                 // Add the properties themselves
                 foreach (var op in this.UserDefinedProperties.Properties)
                 {
-                    ITypedPropertyValue p = PropertyFactory.Instance.NewProperty(op.VTType, ps.PropertySet1.PropertyContext.CodePage);
+                    ITypedPropertyValue p = factory.NewProperty(op.VTType, ps.PropertySet1.PropertyContext.CodePage, op.PropertyIdentifier);
                     p.Value = op.Value;
                     ps.PropertySet1.Properties.Add(p);
                     ps.PropertySet1.PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset() { PropertyIdentifier = op.PropertyIdentifier, Offset = 0 });

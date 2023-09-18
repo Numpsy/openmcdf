@@ -50,6 +50,9 @@ namespace OpenMcdf.Extensions.OLEProperties
             PropertySet0.Size = br.ReadUInt32();
             PropertySet0.NumProperties = br.ReadUInt32();
 
+            // @@TODO@@ deduplicate some of this Guid creation
+            Guid docSummaryGuid = new Guid(WellKnownFMTID.FMTID_DocSummaryInformation);
+            PropertyFactory factory = FMTID0 == docSummaryGuid ? DocumentSummaryInfoPropertyFactory.Instance : SummaryInfoPropertyFactory.Instance;
 
             // Read property offsets (P0)
             for (int i = 0; i < PropertySet0.NumProperties; i++)
@@ -66,7 +69,9 @@ namespace OpenMcdf.Extensions.OLEProperties
             for (int i = 0; i < PropertySet0.NumProperties; i++)
             {
                 br.BaseStream.Seek(Offset0 + PropertySet0.PropertyIdentifierAndOffsets[i].Offset, System.IO.SeekOrigin.Begin);
-                PropertySet0.Properties.Add(ReadProperty(PropertySet0.PropertyIdentifierAndOffsets[i].PropertyIdentifier, PropertySet0.PropertyContext.CodePage, br));
+
+                var property = ReadProperty(PropertySet0.PropertyIdentifierAndOffsets[i].PropertyIdentifier, PropertySet0.PropertyContext.CodePage, br, factory);
+                PropertySet0.Properties.Add(property);
             }
 
             if (NumPropertySets == 2)
@@ -91,7 +96,9 @@ namespace OpenMcdf.Extensions.OLEProperties
                 for (int i = 0; i < PropertySet1.NumProperties; i++)
                 {
                     br.BaseStream.Seek(Offset1 + PropertySet1.PropertyIdentifierAndOffsets[i].Offset, System.IO.SeekOrigin.Begin);
-                    PropertySet1.Properties.Add(ReadProperty(PropertySet1.PropertyIdentifierAndOffsets[i].PropertyIdentifier, PropertySet1.PropertyContext.CodePage, br));
+
+                    var property = ReadProperty(PropertySet1.PropertyIdentifierAndOffsets[i].PropertyIdentifier, PropertySet1.PropertyContext.CodePage, br, factory);
+                    PropertySet1.Properties.Add(property);
                 }
             }
         }
@@ -222,14 +229,14 @@ namespace OpenMcdf.Extensions.OLEProperties
 
 
 
-        private IProperty ReadProperty(uint propertyIdentifier, int codePage, BinaryReader br)
+        private IProperty ReadProperty(uint propertyIdentifier, int codePage, BinaryReader br, PropertyFactory factory)
         {
             if (propertyIdentifier != 0)
             {
                 VTPropertyType vType = (VTPropertyType)br.ReadUInt16();
                 br.ReadUInt16(); // Ushort Padding
 
-                ITypedPropertyValue pr = PropertyFactory.Instance.NewProperty(vType, codePage);
+                ITypedPropertyValue pr = factory.NewProperty(vType, codePage, propertyIdentifier);
                 pr.Read(br);
 
                 return pr;
