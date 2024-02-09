@@ -61,16 +61,30 @@ namespace OpenMcdf.Extensions.OLEProperties
 
         public void Write(BinaryWriter bw)
         {
+            long curPos = bw.BaseStream.Position;
+
             bw.Write(entries.Count);
 
             foreach (KeyValuePair<uint, string> kv in entries)
             {
                 bw.Write(kv.Key);
+
                 string s = kv.Value;
                 if (!s.EndsWith("\0"))
                     s += "\0";
-                bw.Write(Encoding.GetEncoding(this.codePage).GetBytes(s));
+
+                var nameBytes = Encoding.GetEncoding(this.codePage).GetBytes(s);
+
+                bw.Write(nameBytes.Length);
+                bw.Write(nameBytes);
             }
+
+            var size = (int)(bw.BaseStream.Position - curPos);
+            var m = (int)size % 4;
+
+            if (m > 0)
+                for (int i = 0; i < m; i++)  // padding
+                    bw.Write((byte)0);
 
         }
     }
