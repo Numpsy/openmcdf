@@ -166,6 +166,26 @@ namespace OpenMcdf.Extensions.OLEProperties
             get { return properties; }
         }
 
+        public OLEPropertiesContainer CreateUserDefinedProperties(int codePage)
+        {
+            UserDefinedProperties = new OLEPropertiesContainer(codePage, ContainerType.UserDefinedProperties);
+            UserDefinedProperties.PropertyNames = new Dictionary<uint, string>();
+
+            var op = new OLEProperty(UserDefinedProperties);
+
+            op.VTType = VTPropertyType.VT_I2;
+            op.PropertyIdentifier = 1;
+            op.Value = (short)codePage;
+
+            UserDefinedProperties.properties.Add(op);
+
+
+            this.HasUserDefinedProperties = true;
+
+
+            return UserDefinedProperties;
+        }
+
         public OLEProperty NewProperty(VTPropertyType vtPropertyType, uint propertyIdentifier, string propertyName = null)
         {
             //throw new NotImplementedException("API Unstable - Work in progress - Milestone 2.3.0.0");
@@ -183,6 +203,42 @@ namespace OpenMcdf.Extensions.OLEProperties
         {
             //throw new NotImplementedException("API Unstable - Work in progress - Milestone 2.3.0.0");
             properties.Add(property);
+        }
+
+        // Add a user defined property
+        // @@NOTE@@ Doesn't currently support adding a new UserDefined property set - only adding properties to an existing one
+        //     returns null in that case
+        // @@TODO@@ the property names have to be unique, so we need to handle that (and decide what will happen if a property
+        //   with the same name and a different type already exists
+        // @@TODO@@ property names are either case sensitive or insensitive based on the Behavior property - handle that
+        //  refs https://learn.microsoft.com/en-us/openspecs/windows_protocols/MS-OLEPS/1149ab6d-06bc-4044-940d-e6681c1ce4e1
+        public OLEProperty AddUserDefinedProperty(VTPropertyType vtPropertyType, string name)
+        {
+            if (this.ContainerType != ContainerType.UserDefinedProperties)
+                return null;
+
+            // Work out a property identifier - must be > 1 and unique as per 
+            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oleps/333959a3-a999-4eca-8627-48a224e63e77
+
+            uint identifier = 2;
+
+            if (this.PropertyNames.Count > 0)
+            {
+                uint highestIdentifier = this.PropertyNames.Keys.Max();
+                identifier = Math.Max(highestIdentifier, 2) + 1;
+            }
+
+            this.PropertyNames[identifier] = name;
+
+            var op = new OLEProperty(this)
+            {
+                VTType = vtPropertyType,
+                PropertyIdentifier = identifier
+            };
+
+            properties.Add(op);
+
+            return op;
         }
 
         public void RemoveProperty(uint propertyIdentifier)
