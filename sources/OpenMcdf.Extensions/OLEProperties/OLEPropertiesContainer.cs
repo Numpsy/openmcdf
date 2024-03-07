@@ -172,6 +172,44 @@ namespace OpenMcdf.Extensions.OLEProperties
             properties.Add(property);
         }
 
+        /// <summary>
+        /// Create a new UserDefinedProperty.
+        /// </summary>
+        /// <param name="vtPropertyType">The type of property to create.</param>
+        /// <param name="name">The name of the new property.</param>
+        /// <returns>The new property, of null if this container can't contain user defined properties.</returns>
+        public OLEProperty AddUserDefinedProperty(VTPropertyType vtPropertyType, string name)
+        {
+            if (this.ContainerType != ContainerType.UserDefinedProperties)
+                return null;
+
+            // Work out a property identifier - must be > 1 and unique as per 
+            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oleps/333959a3-a999-4eca-8627-48a224e63e77
+
+            // @@TODO@@ the property names have to be unique, so we need to handle that (and decide what will happen if a property
+            //   with the same name and a different type already exists)
+
+            uint identifier = 2;
+
+            if (this.PropertyNames.Count > 0)
+            {
+                uint highestIdentifier = this.PropertyNames.Keys.Max();
+                identifier = Math.Max(highestIdentifier, 2) + 1;
+            }
+
+            this.PropertyNames[identifier] = name;
+
+            var op = new OLEProperty(this)
+            {
+                VTType = vtPropertyType,
+                PropertyIdentifier = identifier
+            };
+
+            properties.Add(op);
+
+            return op;
+        }
+
         public void RemoveProperty(uint propertyIdentifier)
         {
             //throw new NotImplementedException("API Unstable - Work in progress - Milestone 2.3.0.0");
