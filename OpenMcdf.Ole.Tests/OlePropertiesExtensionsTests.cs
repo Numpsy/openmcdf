@@ -537,4 +537,30 @@ public class OlePropertiesExtensionsTests
             CollectionAssert.AreEqual(expectedPropertyNames, co.PropertyNames);
         }
     }
+
+    /// Read the summary information into a high level class
+    [TestMethod]
+    public void TestReadSummaryInformation()
+    {
+        using MemoryStream modifiedStream = new();
+        using (FileStream stream = File.OpenRead("english.presets.doc"))
+            stream.CopyTo(modifiedStream);
+
+        using var cf = RootStorage.Open(modifiedStream);
+
+        SummaryInformation? summaryInformation = cf.GetSummaryInformation();
+        Assert.IsNotNull(summaryInformation);
+
+        Assert.AreEqual(-535, summaryInformation.CodePage);
+        Assert.AreEqual("TitleField", summaryInformation.Title);
+        Assert.AreEqual("SubjectField", summaryInformation.Subject);
+        Assert.AreEqual("pwebster", summaryInformation.Author);
+        Assert.AreEqual("KeywordsGoEre", summaryInformation.Keywords);
+        Assert.AreEqual("Summat Interesting, or not", summaryInformation.Comments);
+        Assert.AreEqual("Normal.dotm", summaryInformation.Template);
+        Assert.AreEqual(DateTime.FromFileTimeUtc(6710000000), summaryInformation.EditTIme);
+        Assert.AreEqual(DateTime.FromFileTimeUtc(0), summaryInformation.LastPrinted);
+        Assert.AreEqual(DateTime.FromFileTimeUtc(129743056800000000), summaryInformation.CreateTime);
+        Assert.AreEqual(DateTime.FromFileTimeUtc(131776966307050000), summaryInformation.LastSavedTime);
+    }
 }
