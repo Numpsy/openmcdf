@@ -30,6 +30,8 @@
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
     <PackageVersion Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <!-- Update Tmds.DBus.Protocol to pick up fix for https://github.com/advisories/GHSA-xrw6-gwf8-vvr9 -->
+    <PackageVersion Include="Tmds.DBus.Protocol" Version="0.21.3" />
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
   </ItemGroup>
 </Project>
