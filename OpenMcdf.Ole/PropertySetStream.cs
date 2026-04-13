@@ -57,7 +57,7 @@ internal sealed class PropertySetStream
 
         uint size = br.ReadUInt32();
         uint propertyCount = br.ReadUInt32();
-        PropertySet0 = new PropertySet
+        PropertySet0 = FMTID0 == FormatIdentifiers.HwpSummaryInformation ? new HwpSummaryPropertySet() : new PropertySet()
         {
             Size = size,
         };

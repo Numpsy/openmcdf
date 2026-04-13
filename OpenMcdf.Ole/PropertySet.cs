@@ -1,6 +1,6 @@
 ﻿namespace OpenMcdf.Ole;
 
-internal sealed class PropertySet
+internal class PropertySet
 {
     public PropertyContext PropertyContext { get; set; } = new();
 
@@ -10,32 +10,39 @@ internal sealed class PropertySet
 
     public List<IProperty> Properties { get; } = new();
 
-    public void LoadContext(int propertySetOffset, BinaryReader br)
+    public virtual void LoadContext(int propertySetOffset, BinaryReader br)
     {
-        long currPos = br.BaseStream.Position;
-
-        // Read the code page - this should always be present
-        PropertyIdentifierAndOffset? codePageProperty = PropertyIdentifierAndOffsets.FirstOrDefault(pio => pio.PropertyIdentifier == SpecialPropertyIdentifiers.CodePage);
-        if (codePageProperty is null)
+        // The CodePage should always be present - threat it being missing as an error
+        if (!PropertyIdentifierAndOffsets.Any(pio => pio.PropertyIdentifier == SpecialPropertyIdentifiers.CodePage))
         {
             throw new FileFormatException("Required CodePage property not present");
         }
 
-        int codePageOffset = (int)(propertySetOffset + codePageProperty.Offset);
-        br.BaseStream.Seek(codePageOffset, SeekOrigin.Begin);
+        ReadContextProperties(propertySetOffset, br);
+    }
 
-        var vType = (VTPropertyType)br.ReadUInt16();
-        br.ReadUInt16(); // Ushort Padding
-        PropertyContext.CodePage = (ushort)br.ReadInt16();
+    private protected void ReadContextProperties(int propertySetOffset, BinaryReader br)
+    {
+        long currPos = br.BaseStream.Position;
 
-        // Read the Locale, if present
+        PropertyIdentifierAndOffset? codePageProperty = PropertyIdentifierAndOffsets.FirstOrDefault(pio => pio.PropertyIdentifier == SpecialPropertyIdentifiers.CodePage);
+        if (codePageProperty is not null)
+        {
+            long codePageOffset = propertySetOffset + codePageProperty.Offset;
+            br.BaseStream.Seek(codePageOffset, SeekOrigin.Begin);
+
+            var vType = (VTPropertyType)br.ReadUInt16();
+            br.ReadUInt16(); // Ushort Padding
+            PropertyContext.CodePage = (ushort)br.ReadInt16();
+        }
+
         PropertyIdentifierAndOffset? localeProperty = PropertyIdentifierAndOffsets.FirstOrDefault(pio => pio.PropertyIdentifier == SpecialPropertyIdentifiers.Locale);
         if (localeProperty is not null)
         {
             long localeOffset = propertySetOffset + localeProperty.Offset;
             br.BaseStream.Seek(localeOffset, SeekOrigin.Begin);
 
-            vType = (VTPropertyType)br.ReadUInt16();
+            var vType = (VTPropertyType)br.ReadUInt16();
             br.ReadUInt16(); // Ushort Padding
             PropertyContext.Locale = br.ReadUInt32();
         }
@@ -52,4 +59,15 @@ internal sealed class PropertySet
         Properties.Add(dictionaryProperty);
         PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset() { PropertyIdentifier = SpecialPropertyIdentifiers.Dictionary, Offset = 0 });
     }
+}
+
+internal sealed class HwpSummaryPropertySet : PropertySet
+{
+    // For HWP Summary information streams, default the codepage to UTF-8
+    public HwpSummaryPropertySet()
+    {
+        PropertyContext.CodePage = 65001;
+    }
+
+    public override void LoadContext(int propertySetOffset, BinaryReader br) => ReadContextProperties(propertySetOffset, br);
 }
