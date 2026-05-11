@@ -45,12 +45,9 @@ internal sealed class PropertySet
         br.BaseStream.Position = currPos;
     }
 
-    public void Add(IDictionary<uint, string> propertyNames)
+    public void Add(Dictionary<uint, string> propertyNames)
     {
-        DictionaryProperty dictionaryProperty = new(PropertyContext.CodePage)
-        {
-            Value = propertyNames,
-        };
+        DictionaryProperty dictionaryProperty = new(PropertyContext.CodePage, propertyNames);
         Properties.Add(dictionaryProperty);
         PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset(SpecialPropertyIdentifiers.Dictionary, 0));
     }

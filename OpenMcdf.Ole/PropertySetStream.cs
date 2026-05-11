@@ -223,17 +223,12 @@ internal sealed class PropertySetStream
     {
         if (propertyIdentifier == SpecialPropertyIdentifiers.Dictionary)
         {
-            DictionaryProperty dictionaryProperty = new(codePage);
-            dictionaryProperty.Read(br);
-            return dictionaryProperty;
+            return DictionaryProperty.Read(br, codePage);
         }
 
         var vType = (VTPropertyType)br.ReadUInt16();
         br.ReadUInt16(); // Ushort Padding
 
-        ITypedPropertyValue pr = factory.CreateProperty(vType, codePage, propertyIdentifier);
-        pr.Read(br);
-
-        return pr;
+        return factory.ReadProperty(br, vType, codePage, propertyIdentifier);
     }
 }

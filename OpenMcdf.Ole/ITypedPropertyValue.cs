@@ -14,4 +14,6 @@ internal interface ITypedPropertyValue : IProperty
     PropertyDimensions PropertyDimensions { get; }
 
     bool IsVariant { get; }
+
+    void Read(BinaryReader br);
 }

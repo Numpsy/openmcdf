@@ -44,6 +44,13 @@ internal abstract class PropertyFactory
         return pr;
     }
 
+    public ITypedPropertyValue ReadProperty(BinaryReader br, VTPropertyType vType, int codePage, uint propertyIdentifier, bool isVariant = false)
+    {
+        ITypedPropertyValue propertyValue = CreateProperty(vType, codePage, propertyIdentifier, isVariant);
+        propertyValue.Read(br);
+        return propertyValue;
+    }
+
     protected virtual ITypedPropertyValue CreateLpstrProperty(VTPropertyType vType, int codePage, uint propertyIdentifier, bool isVariant) => new VT_LPSTR_Property(vType, codePage, isVariant);
 
     #region Property implementations
@@ -613,9 +620,7 @@ internal abstract class PropertyFactory
             var vType = (VTPropertyType)br.ReadUInt16();
             br.ReadUInt16(); // Ushort Padding
 
-            ITypedPropertyValue p = factory.CreateProperty(vType, codePage, propertyIdentifier, true);
-            p.Read(br);
-            return p;
+            return factory.ReadProperty(br, vType, codePage, propertyIdentifier, true);
         }
 
         public override void WriteScalarValue(BinaryWriter bw, object pValue)

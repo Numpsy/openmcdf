@@ -2,15 +2,9 @@
 
 namespace OpenMcdf.Ole;
 
-internal sealed class DictionaryProperty : IProperty
+internal sealed class DictionaryProperty(int codePage, Dictionary<uint, string> entries) : IProperty
 {
-    private readonly int codePage;
-    private Dictionary<uint, string>? entries = new();
-
-    public DictionaryProperty(int codePage)
-    {
-        this.codePage = codePage;
-    }
+    private Dictionary<uint, string>? entries = entries;
 
     public PropertyType PropertyType => PropertyType.DictionaryProperty;
 
@@ -20,18 +14,22 @@ internal sealed class DictionaryProperty : IProperty
         set => entries = (Dictionary<uint, string>?)value;
     }
 
-    public void Read(BinaryReader br)
+    // Read a DictionaryProperty from the provided BinaryReader
+    public static DictionaryProperty Read(BinaryReader br, int codePage)
     {
         long curPos = br.BaseStream.Position;
 
+        // Read the number of entries
+        // Reserve some space in the dictionary, but clamp the size for safety.
         uint numEntries = br.ReadUInt32();
+        Dictionary<uint, string> entries = new((int)Math.Min(numEntries, 64));
 
         // Encoding.GetEncoding can actually be quite slow, so as all strings are in the same codepage, get the encoding once and then use it for each property.
         Encoding encoding = Encoding.GetEncoding(codePage);
 
         for (uint i = 0; i < numEntries; i++)
         {
-            ReadEntry(br, encoding);
+            ReadEntry(br, encoding, entries);
         }
 
         int m = (int)(br.BaseStream.Position - curPos) % 4;
@@ -43,17 +41,19 @@ internal sealed class DictionaryProperty : IProperty
                 br.ReadByte();
             }
         }
+
+        return new(codePage, entries);
     }
 
     // Read a single dictionary entry
-    private void ReadEntry(BinaryReader br, Encoding encoding)
+    private static void ReadEntry(BinaryReader br, Encoding encoding, Dictionary<uint, string> entries)
     {
         uint propertyIdentifier = br.ReadUInt32();
         int length = br.ReadInt32();
 
         byte[] nameBytes;
 
-        if (codePage == CodePages.WinUnicode)
+        if (encoding.CodePage == CodePages.WinUnicode)
         {
             nameBytes = br.ReadBytes(length << 1);
 
@@ -66,11 +66,11 @@ internal sealed class DictionaryProperty : IProperty
             nameBytes = br.ReadBytes(length);
         }
 
-        int nullByteCount = this.codePage == CodePages.WinUnicode ? 2 : 1;
+        int nullByteCount = encoding.CodePage == CodePages.WinUnicode ? 2 : 1;
         int nonNullSize = Math.Max(0, nameBytes.Length - nullByteCount);
 
         string entryName = encoding.GetString(nameBytes, 0, nonNullSize);
-        entries!.Add(propertyIdentifier, entryName);
+        entries.Add(propertyIdentifier, entryName);
     }
 
     /// <summary>
