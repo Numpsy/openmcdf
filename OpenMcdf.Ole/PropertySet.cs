@@ -15,12 +15,12 @@ internal sealed class PropertySet
         long currPos = br.BaseStream.Position;
 
         // Read the code page
-        // The 'HwpSummaryInformation' stream doesn't contain a codepage, but we treat it as mandatory for all other streams
+        // The 'HwpSummaryInformation' stream doesn't have to contain a code page, but we treat it as mandatory for all other streams
         int codePagePropertyIndex = PropertyIdentifierAndOffsets.FindIndex(static pio => pio.PropertyIdentifier == SpecialPropertyIdentifiers.CodePage);
         if (codePagePropertyIndex == -1)
         {
-            // For HWP streams, treat the default codpage as UTF-8
-            // NOTE: This is what various other HWP readers do, but I don't presently have a test file for that - all the files I#ve seen only use VT_LPWSTR properties which are always CP_WINUNICODE
+            // For HWP streams, treat the default code page as UTF-8
+            // NOTE: This is what various other HWP readers do, but it needs more test files to confirm - it's common to use VT_LPWSTR properties which are always CP_WINUNICODE
             if (fmtID == FormatIdentifiers.HwpSummaryInformation)
             {
                 PropertyContext.CodePage = 65001;
