@@ -68,7 +68,8 @@ internal class PropertySet
     {
         if (fmtId == FormatIdentifiers.DocSummaryInformation)
             return new DocumentSummaryInformationPropertySet(br, propertySetOffset);
-        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
+
+        if (fmtId == FormatIdentifiers.HwpSummaryInformation)
             return new HwpSummaryInformationPropertySet(br, propertySetOffset);
 
         return new PropertySet(br, propertySetOffset);
@@ -78,7 +79,8 @@ internal class PropertySet
     {
         if (fmtId == FormatIdentifiers.DocSummaryInformation)
             return new DocumentSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
-        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
+
+        if (fmtId == FormatIdentifiers.HwpSummaryInformation)
             return new HwpSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
 
         return new PropertySet(propertyContext, initialPropertyCount, propertyNames);
