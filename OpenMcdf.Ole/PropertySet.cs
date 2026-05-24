@@ -41,6 +41,9 @@ internal class PropertySet
             br.BaseStream.Seek(propertySetOffset + propertyIdentifierAndOffset.Offset, SeekOrigin.Begin);
             IProperty property = ReadProperty(propertyIdentifierAndOffset.PropertyIdentifier, this.PropertyContext.CodePage, br);
             this.Properties.Add(property);
+
+            if (property is DictionaryProperty dictionaryProperty)
+                this.DictionaryProperty = dictionaryProperty;
         }
 
         // Load additional context properties
@@ -112,13 +115,9 @@ internal class PropertySet
     // Note: This is virtual so that the behavior can be overridden in specific property sets
     protected virtual IProperty ReadProperty(uint propertyIdentifier, int codePage, BinaryReader br)
     {
-        if (propertyIdentifier == SpecialPropertyIdentifiers.Dictionary)
-        {
-            this.DictionaryProperty = DictionaryProperty.Read(br, codePage);
-            return this.DictionaryProperty;
-        }
-
-        return ReadTypedProperty(propertyIdentifier, codePage, br);
+        return propertyIdentifier == SpecialPropertyIdentifiers.Dictionary
+            ? DictionaryProperty.Read(br, codePage)
+            : ReadTypedProperty(propertyIdentifier, codePage, br);
     }
 
     // Read the specified typed property value
