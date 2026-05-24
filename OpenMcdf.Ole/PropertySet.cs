@@ -12,7 +12,7 @@ internal class PropertySet
 
     protected virtual PropertyFactory PropertyFactory { get; } = DefaultPropertyFactory.Default;
 
-    public DictionaryProperty? DictionaryProperty { get; private set; }
+    public DictionaryProperty? DictionaryProperty { get; }
 
     // Create a PropertySet by reading from the supplied BinaryReader
     public PropertySet(BinaryReader br, uint propertySetOffset)
@@ -50,11 +50,18 @@ internal class PropertySet
         LoadContext();
     }
 
-    public PropertySet(PropertyContext propertyContext, int initialPropertyCount)
+    public PropertySet(PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyNames)
     {
         this.PropertyContext = propertyContext;
         this.PropertyIdentifierAndOffsets = new(initialPropertyCount);
         this.Properties = new(initialPropertyCount);
+
+        if (propertyNames is not null)
+        {
+            this.DictionaryProperty = new(PropertyContext.CodePage, propertyNames);
+            Properties.Add(this.DictionaryProperty);
+            PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset(SpecialPropertyIdentifiers.Dictionary, 0));
+        }
     }
 
     // ReadCodePage is virtual to allow PropertySet specific handling of missing/default values
@@ -96,13 +103,6 @@ internal class PropertySet
         }
     }
 
-    public void Add(Dictionary<uint, string> propertyNames)
-    {
-        this.DictionaryProperty = new(PropertyContext.CodePage, propertyNames);
-        Properties.Add(this.DictionaryProperty);
-        PropertyIdentifierAndOffsets.Add(new PropertyIdentifierAndOffset(SpecialPropertyIdentifiers.Dictionary, 0));
-    }
-
     public void AddProperty(VTPropertyType vType, uint propertyIdentifier, object? value)
     {
         ITypedPropertyValue p = this.PropertyFactory.CreateProperty(vType, PropertyContext.CodePage, propertyIdentifier);
@@ -138,8 +138,8 @@ internal sealed class DocumentSummaryInformationPropertySet : PropertySet
     {
     }
 
-    public DocumentSummaryInformationPropertySet(PropertyContext propertyContext, int initialPropertyCount)
-        : base(propertyContext, initialPropertyCount)
+    public DocumentSummaryInformationPropertySet(PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyName)
+        : base(propertyContext, initialPropertyCount, propertyName)
     {
     }
 
@@ -154,8 +154,8 @@ internal sealed class HwpSummaryInformationPropertySet : PropertySet
     {
     }
 
-    public HwpSummaryInformationPropertySet(PropertyContext propertyContext, int initialPropertyCount)
-        : base(propertyContext, initialPropertyCount)
+    public HwpSummaryInformationPropertySet(PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyNames)
+        : base(propertyContext, initialPropertyCount, propertyNames)
     {
     }
 

@@ -163,7 +163,7 @@ internal sealed class PropertySetStream
         }
     }
 
-    private static PropertySet ReadPropertySet(Guid fmtId, BinaryReader br, uint propertySetOffset)
+    private static PropertySet ReadPropertySet(in Guid fmtId, BinaryReader br, uint propertySetOffset)
     {
         if (fmtId == FormatIdentifiers.DocSummaryInformation)
             return new DocumentSummaryInformationPropertySet(br, propertySetOffset);

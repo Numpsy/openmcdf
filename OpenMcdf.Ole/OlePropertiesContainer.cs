@@ -225,6 +225,10 @@ public class OlePropertiesContainer
     {
         using BinaryWriter bw = new(cfStream, Encoding.UTF8, leaveOpen: true);
 
+        // If we're writing an AppSpecific property set and have property names, then add a dictionary property
+        Dictionary<uint, string>? containerPropertyNames =
+            (ContainerType == ContainerType.AppSpecific && PropertyNames is not null && PropertyNames.Count > 0) ? PropertyNames : null;
+
         PropertySetStream ps = new()
         {
             ByteOrder = 0xFFFE,
@@ -240,14 +244,8 @@ public class OlePropertiesContainer
             FMTID1 = Guid.Empty,
             Offset1 = 0,
 
-            PropertySet0 = CreatePropertySet(this.FMTID0, Context, Properties.Count),
+            PropertySet0 = CreatePropertySet(this.FMTID0, Context, Properties.Count, containerPropertyNames),
         };
-
-        // If we're writing an AppSpecific property set and have property names, then add a dictionary property
-        if (ContainerType == ContainerType.AppSpecific && PropertyNames is not null && PropertyNames.Count > 0)
-        {
-            ps.PropertySet0.Add(PropertyNames);
-        }
 
         foreach (OleProperty op in Properties)
         {
@@ -258,11 +256,8 @@ public class OlePropertiesContainer
         {
             ps.NumPropertySets = 2;
             ps.FMTID1 = FormatIdentifiers.UserDefinedProperties;
-            ps.PropertySet1 = CreatePropertySet(ps.FMTID1, UserDefinedProperties.Context, UserDefinedProperties.Properties.Count);
+            ps.PropertySet1 = CreatePropertySet(ps.FMTID1, UserDefinedProperties.Context, UserDefinedProperties.Properties.Count, UserDefinedProperties.PropertyNames!);
             ps.Offset1 = 0;
-
-            // Add the dictionary containing the property names
-            ps.PropertySet1.Add(UserDefinedProperties.PropertyNames!);
 
             // Add the properties themselves
             foreach (OleProperty op in UserDefinedProperties.Properties)
@@ -274,14 +269,14 @@ public class OlePropertiesContainer
         ps.Write(bw);
     }
 
-    private static PropertySet CreatePropertySet(Guid fmtId, PropertyContext propertyContext, int initialPropertyCount)
+    private static PropertySet CreatePropertySet(in Guid fmtId, PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyNames)
     {
         if (fmtId == FormatIdentifiers.DocSummaryInformation)
-            return new DocumentSummaryInformationPropertySet(propertyContext, initialPropertyCount);
+            return new DocumentSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
         else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
-            return new HwpSummaryInformationPropertySet(propertyContext, initialPropertyCount);
+            return new HwpSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
 
-        return new PropertySet(propertyContext, initialPropertyCount);
+        return new PropertySet(propertyContext, initialPropertyCount, propertyNames);
     }
 
     // Determine the type of the container from the FMTID0 property.
