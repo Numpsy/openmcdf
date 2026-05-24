@@ -64,6 +64,26 @@ internal class PropertySet
         }
     }
 
+    public static PropertySet Read(in Guid fmtId, BinaryReader br, uint propertySetOffset)
+    {
+        if (fmtId == FormatIdentifiers.DocSummaryInformation)
+            return new DocumentSummaryInformationPropertySet(br, propertySetOffset);
+        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
+            return new HwpSummaryInformationPropertySet(br, propertySetOffset);
+
+        return new PropertySet(br, propertySetOffset);
+    }
+
+    public static PropertySet Create(in Guid fmtId, PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyNames)
+    {
+        if (fmtId == FormatIdentifiers.DocSummaryInformation)
+            return new DocumentSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
+        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
+            return new HwpSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
+
+        return new PropertySet(propertyContext, initialPropertyCount, propertyNames);
+    }
+
     // ReadCodePage is virtual to allow PropertySet specific handling of missing/default values
     protected virtual int ReadCodePage(BinaryReader br, uint propertySetOffset)
     {

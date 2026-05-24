@@ -244,7 +244,7 @@ public class OlePropertiesContainer
             FMTID1 = Guid.Empty,
             Offset1 = 0,
 
-            PropertySet0 = CreatePropertySet(this.FMTID0, Context, Properties.Count, containerPropertyNames),
+            PropertySet0 = PropertySet.Create(this.FMTID0, Context, Properties.Count, containerPropertyNames),
         };
 
         foreach (OleProperty op in Properties)
@@ -256,7 +256,7 @@ public class OlePropertiesContainer
         {
             ps.NumPropertySets = 2;
             ps.FMTID1 = FormatIdentifiers.UserDefinedProperties;
-            ps.PropertySet1 = CreatePropertySet(ps.FMTID1, UserDefinedProperties.Context, UserDefinedProperties.Properties.Count, UserDefinedProperties.PropertyNames!);
+            ps.PropertySet1 = PropertySet.Create(ps.FMTID1, UserDefinedProperties.Context, UserDefinedProperties.Properties.Count, UserDefinedProperties.PropertyNames!);
             ps.Offset1 = 0;
 
             // Add the properties themselves
@@ -267,16 +267,6 @@ public class OlePropertiesContainer
         }
 
         ps.Write(bw);
-    }
-
-    private static PropertySet CreatePropertySet(in Guid fmtId, PropertyContext propertyContext, int initialPropertyCount, Dictionary<uint, string>? propertyNames)
-    {
-        if (fmtId == FormatIdentifiers.DocSummaryInformation)
-            return new DocumentSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
-        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
-            return new HwpSummaryInformationPropertySet(propertyContext, initialPropertyCount, propertyNames);
-
-        return new PropertySet(propertyContext, initialPropertyCount, propertyNames);
     }
 
     // Determine the type of the container from the FMTID0 property.

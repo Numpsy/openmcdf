@@ -51,12 +51,12 @@ internal sealed class PropertySetStream
             Offset1 = br.ReadUInt32();
         }
 
-        PropertySet0 = ReadPropertySet(FMTID0, br, Offset0);
+        PropertySet0 = PropertySet.Read(FMTID0, br, Offset0);
 
         if (NumPropertySets == 2)
         {
             br.BaseStream.Seek(Offset1, SeekOrigin.Begin);
-            PropertySet1 = ReadPropertySet(FMTID1, br, Offset1);
+            PropertySet1 = PropertySet.Read(FMTID1, br, Offset1);
         }
     }
 
@@ -161,16 +161,6 @@ internal sealed class PropertySetStream
                 bw.Write((int)(oc1.PropertyOffsets[i] - oc1.OffsetPS));
             }
         }
-    }
-
-    private static PropertySet ReadPropertySet(in Guid fmtId, BinaryReader br, uint propertySetOffset)
-    {
-        if (fmtId == FormatIdentifiers.DocSummaryInformation)
-            return new DocumentSummaryInformationPropertySet(br, propertySetOffset);
-        else if (fmtId == FormatIdentifiers.HwpSummaryInformation)
-            return new HwpSummaryInformationPropertySet(br, propertySetOffset);
-
-        return new PropertySet(br, propertySetOffset);
     }
 
     private static void WriteGuid(BinaryWriter writer, in Guid value)
